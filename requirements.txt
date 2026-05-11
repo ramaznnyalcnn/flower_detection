@@ -1,0 +1,37 @@
+# ── Flower Recognition Project ──
+# Temel
+numpy>=1.24
+scipy>=1.10
+Pillow>=9.0
+scikit-learn>=1.2
+joblib>=1.2
+matplotlib>=3.7
+seaborn>=0.12
+
+# Görüntü işleme
+opencv-python>=4.7
+imagehash>=4.3
+
+# Feature extraction
+scikit-image>=0.20
+
+# Klasik ML (GPU-accelerated)
+xgboost>=1.7
+
+# Deep Learning (CUDA)
+torch>=2.0
+torchvision>=0.15
+
+# Veri toplama
+bing-image-downloader>=1.1
+
+# Web arayüzü
+streamlit>=1.25
+gradio>=3.40
+
+# Boyut indirgeme / görselleştirme
+umap-learn>=0.5
+
+# Rapor
+pandas>=2.0
+tqdm>=4.65

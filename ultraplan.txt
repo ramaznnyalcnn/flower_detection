@@ -1,0 +1,8 @@
+/ultraplan şimdi burada llm wiki var zaten projeyi daha iyi anlaman için ama genel 
+ olarak şöyle  söyleyeyim ders projesi bu ve amacım gerçek dünyada çalışabilecek ve  
+tek seferde değil bir kaç sefer eğitilecek bir çiçek tanıma modeli ilk adımda sadece 
+ profesiyonel veri setleri ile eğitilip ardından ise daha google ve benzeri          
+yerlerden gerçek görseller ile eğitilecek ve en sonunda ise model bir bukette kaç    
+hangi çiçeklerin olduğunu bulabilecek kadar gelişmiş seviye ve de google üzerinden   
+bir çiçek resmi geldiği zaman onu anlayabilecek kadar gelişmiş olması                
+hedeflenmektedir    
