@@ -1,0 +1,32 @@
+# Canonical class name → list of aliases across datasets
+#
+# Oxford 102 uses specific names; TF Flowers and Kaggle use plural/variant names.
+# Each alias maps to the canonical name listed as the key.
+#
+# Rule: Oxford class names are kept as-is EXCEPT common_dandelion → dandelion.
+# TF Flowers: roses→rose, sunflowers→sunflower, tulips→tulip
+# Kaggle: chamomile kept standalone; rose/sunflower/tulip/dandelion match TF
+
+dandelion:
+  - dandelion
+  - common_dandelion   # Oxford 102 name
+
+rose:
+  - rose               # Oxford 102 and Kaggle
+  - roses              # TF Flowers
+
+sunflower:
+  - sunflower          # Oxford 102 and Kaggle
+  - sunflowers         # TF Flowers
+
+tulip:
+  - tulip              # Kaggle
+  - tulips             # TF Flowers
+  # NOTE: Oxford's 'siam_tulip' is a distinct species → not merged here
+
+daisy:
+  - daisy              # TF Flowers standalone
+  # NOTE: Oxford's 'oxeye_daisy' and 'barbeton_daisy' are distinct → not merged
+
+chamomile:
+  - chamomile          # Kaggle standalone
