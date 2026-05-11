@@ -235,19 +235,28 @@ def run_evaluate(args) -> None:
 def run_cnn_train(args) -> None:
     from src.cnn_model import train_cnn
 
-    output_path = Path(args.models_dir) / "resnet50_best.pt"
+    backbone = getattr(args, "backbone", "resnet50")
+    output_path = Path(args.models_dir) / f"{backbone}_best.pt"
+    if args.model_path:
+        output_path = Path(args.model_path)
+
     summary = train_cnn(
         data_dir=args.data_dir,
         output_path=output_path,
+        backbone=backbone,
         image_size=args.image_size,
         batch_size=args.batch_size,
         epochs=args.epochs,
+        stage1_epochs=getattr(args, "stage1_epochs", 5),
         lr=args.lr,
         patience=args.patience,
         pretrained=not args.no_pretrained,
         fine_tune=args.fine_tune,
         prefer_cuda=not args.cpu,
         num_workers=args.num_workers,
+        use_mixup=getattr(args, "use_mixup", False),
+        use_randaugment=True,
+        weighted_sampler=getattr(args, "weighted_sampler", True),
     )
     print(f"Saved {output_path}")
     print(f"Best val accuracy: {summary['best_val_accuracy']:.4f}")
@@ -259,7 +268,14 @@ def run_predict(args) -> None:
     if not args.image:
         raise ValueError("--image is required for predict")
 
-    predictions = predict_any(args.image, args.model_path, top_k=args.top_k)
+    use_tta = getattr(args, "use_tta", False)
+    if Path(args.model_path).suffix == ".pt" and use_tta:
+        from src.cnn_model import predict_cnn_tta
+        predictions = predict_cnn_tta(
+            args.image, args.model_path, top_k=args.top_k, prefer_cuda=not args.cpu
+        )
+    else:
+        predictions = predict_any(args.image, args.model_path, top_k=args.top_k)
     for index, item in enumerate(predictions, start=1):
         print(f"{index}. {item['label']}: {item['score']:.4f}")
 
@@ -282,8 +298,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--task",
         required=True,
-        choices=["validate-data", "classical-baseline", "cnn-train", "evaluate", "predict", "visualize"],
+        choices=["validate-data", "classical-baseline", "cnn-train", "evaluate", "predict", "visualize", "build-unified"],
     )
+    parser.add_argument("--oxford-dir", default="data/processed/oxford102_70_15_15")
+    parser.add_argument("--aliases", default="configs/class_aliases.yaml")
+    parser.add_argument("--kaggle-dir", default=None)
+    parser.add_argument("--skip-tf", action="store_true")
+    parser.add_argument("--stats-path", default="results/unified_class_stats.json")
+    parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--data-dir", default="data/processed/oxford102")
     parser.add_argument("--results-dir", default="results")
     parser.add_argument("--models-dir", default="models")
@@ -305,6 +327,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-pretrained", action="store_true")
     parser.add_argument("--fine-tune", action="store_true")
     parser.add_argument("--cpu", action="store_true")
+    parser.add_argument("--backbone", default="resnet50",
+                        choices=["resnet50", "efficientnet_b0", "convnext_tiny"])
+    parser.add_argument("--stage1-epochs", type=int, default=5)
+    parser.add_argument("--use-mixup", action="store_true")
+    parser.add_argument("--weighted-sampler", action="store_true", default=True)
+    parser.add_argument("--no-weighted-sampler", dest="weighted_sampler", action="store_false")
+    parser.add_argument("--use-tta", action="store_true")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--embedding-method", default="pca", choices=["pca", "lda", "tsne", "umap"])
     return parser.parse_args()
@@ -312,6 +341,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.task == "build-unified":
+        from scripts.build_unified_dataset import main as _build_unified
+        import sys
+        sys.argv = [
+            "build_unified_dataset.py",
+            "--oxford-dir", args.oxford_dir,
+            "--output-dir", args.data_dir,
+            "--aliases", args.aliases,
+            "--stats-path", args.stats_path,
+        ]
+        if args.kaggle_dir:
+            sys.argv += ["--kaggle-dir", args.kaggle_dir]
+        if args.skip_tf:
+            sys.argv.append("--skip-tf")
+        if args.overwrite:
+            sys.argv.append("--overwrite")
+        _build_unified()
+        return
+
     handlers = {
         "validate-data": validate_data,
         "classical-baseline": run_classical_baseline,
