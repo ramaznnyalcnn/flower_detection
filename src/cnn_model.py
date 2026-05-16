@@ -267,9 +267,13 @@ def train_cnn(
     use_mixup: bool = False,
     use_randaugment: bool = True,
     weighted_sampler: bool = True,
+    seed: int = 42,
 ) -> dict:
     if backbone not in BACKBONES:
         raise ValueError(f"backbone must be one of {BACKBONES}")
+
+    from src.seed import set_global_seed
+    set_global_seed(seed)
 
     torch, nn, _, _, _, _ = _require_torch()
     device = get_device(prefer_cuda=prefer_cuda)

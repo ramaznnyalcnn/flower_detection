@@ -83,6 +83,32 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Sonuçları Yeniden Üret
+
+Tezdeki tüm sayılar `seed=42` ile aşağıdaki üç komutla yeniden üretilebilir:
+
+```bash
+# 1. Eğitim (ResNet50 v2 — val %95.0, test %93.2 hedef)
+python run.py --task cnn-train --config configs/experiments/resnet50_v2.yaml
+
+# 2. Sınıf profillerini çıkar (renk + doku, maskelenmiş)
+python scripts/build_class_profiles.py
+
+# 3. Embeddings indeksi (KNN reranking için)
+python scripts/build_embeddings.py --model models/oxford102_70_15_15_cnn/resnet50_v2.pt
+
+# 4. Test setinde değerlendir
+python run.py --task evaluate \
+  --model-path models/oxford102_70_15_15_cnn/resnet50_v2.pt \
+  --data-dir data/processed/oxford102_70_15_15 \
+  --split test
+```
+
+Tüm seed'ler `src/seed.py:set_global_seed` aracılığıyla `random`, `numpy`,
+`torch` ve `torch.backends.cudnn`'e uygulanır. Hiperparametreler
+`configs/experiments/*.yaml` dosyalarında — CLI flag'leri config değerlerini
+ezer, ama varsayılan akış config'i takip eder.
+
 ## Çalıştırma
 
 ```bash

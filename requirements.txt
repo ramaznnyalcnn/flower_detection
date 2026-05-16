@@ -35,3 +35,6 @@ umap-learn>=0.5
 # Rapor
 pandas>=2.0
 tqdm>=4.65
+
+# Yapılandırma
+PyYAML>=6.0

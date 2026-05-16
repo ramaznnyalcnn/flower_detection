@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
+from src.seed import set_global_seed
 from src.classifiers import (
     DEFAULT_CLASSIFIERS,
     load_classical_bundle,
@@ -257,6 +258,7 @@ def run_cnn_train(args) -> None:
         use_mixup=getattr(args, "use_mixup", False),
         use_randaugment=True,
         weighted_sampler=getattr(args, "weighted_sampler", True),
+        seed=args.random_state,
     )
     print(f"Saved {output_path}")
     print(f"Best val accuracy: {summary['best_val_accuracy']:.4f}")
@@ -336,11 +338,31 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--use-tta", action="store_true")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--embedding-method", default="pca", choices=["pca", "lda", "tsne", "umap"])
+    parser.add_argument("--config", default=None,
+                        help="Optional YAML config file. Values override argparse defaults.")
     return parser.parse_args()
+
+
+def _apply_config(args: argparse.Namespace) -> argparse.Namespace:
+    """If --config path is given, override defaults from a YAML file.
+    CLI flags still win over config values (config only replaces argparse defaults
+    that the user didn't explicitly set)."""
+    if not getattr(args, "config", None):
+        return args
+    import yaml
+    with open(args.config, "r") as fh:
+        cfg = yaml.safe_load(fh) or {}
+    for key, value in cfg.items():
+        attr = key.replace("-", "_")
+        if hasattr(args, attr):
+            setattr(args, attr, value)
+    return args
 
 
 def main() -> None:
     args = parse_args()
+    args = _apply_config(args)
+    set_global_seed(args.random_state)
     if args.task == "build-unified":
         from scripts.build_unified_dataset import main as _build_unified
         import sys

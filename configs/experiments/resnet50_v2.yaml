@@ -1,0 +1,21 @@
+# ResNet50 v2 — Oxford 102, 70/15/15 split
+# Best val acc %95.0, test acc %93.2 (epoch 21).
+# Reproduce: python run.py --task cnn-train --config configs/experiments/resnet50_v2.yaml
+
+task: cnn-train
+backbone: resnet50
+data_dir: data/processed/oxford102_70_15_15
+models_dir: models/oxford102_70_15_15_cnn
+model_path: models/oxford102_70_15_15_cnn/resnet50_v2.pt
+image_size: 224
+
+epochs: 25
+stage1_epochs: 5
+batch_size: 32
+lr: 1.0e-4
+patience: 7
+
+use_mixup: true
+weighted_sampler: true
+fine_tune: false
+random_state: 42
