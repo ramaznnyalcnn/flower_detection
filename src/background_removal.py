@@ -49,9 +49,32 @@ def remove_background_grabcut(
         (mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 1, 0
     ).astype(np.uint8)
 
+    # GrabCut başarısız olduysa (çok az veya çok fazla ön plan) orijinali döndür
+    ratio = float(fg_mask.mean())
+    if ratio < 0.08 or ratio > 0.95:
+        return image.copy(), np.ones(image.shape[:2], dtype=np.uint8)
+
     masked_rgb = image.copy()
     masked_rgb[fg_mask == 0] = 0
     return masked_rgb, fg_mask
+
+
+def fg_ratio(fg_mask: np.ndarray) -> float:
+    """Ön plan piksellerinin oranı (0.0–1.0)."""
+    return float(fg_mask.mean())
+
+
+def is_likely_flower(
+    fg_mask: np.ndarray,
+    min_ratio: float = 0.10,
+    max_ratio: float = 0.85,
+) -> bool:
+    """
+    GrabCut çıktısının çiçek olabilecek bir nesne içerip içermediğini sezdirir.
+    %10'un altında ön plan → segmentasyon başarısız (çiçek yok / küçük).
+    %85'in üstünde ön plan → tam ekran doku / arka plan ayrılmamış.
+    """
+    return min_ratio <= fg_ratio(fg_mask) <= max_ratio
 
 
 def remove_background(

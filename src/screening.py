@@ -35,32 +35,58 @@ class ClassProfiles:
     def __init__(
         self,
         classes: list[str],
-        color_means: np.ndarray,   # (n_classes, color_dim)
-        texture_means: np.ndarray, # (n_classes, texture_dim)
+        color_means: np.ndarray,    # (n_classes, color_dim)
+        texture_means: np.ndarray,  # (n_classes, texture_dim)
+        color_dist_means: np.ndarray | None = None,    # (n_classes,)
+        color_dist_stds: np.ndarray | None = None,     # (n_classes,)
+        texture_dist_means: np.ndarray | None = None,  # (n_classes,)
+        texture_dist_stds: np.ndarray | None = None,   # (n_classes,)
     ) -> None:
         self.classes = classes
         self.color_means = color_means.astype(np.float32)
         self.texture_means = texture_means.astype(np.float32)
+        self.color_dist_means = (
+            color_dist_means.astype(np.float32) if color_dist_means is not None else None
+        )
+        self.color_dist_stds = (
+            color_dist_stds.astype(np.float32) if color_dist_stds is not None else None
+        )
+        self.texture_dist_means = (
+            texture_dist_means.astype(np.float32) if texture_dist_means is not None else None
+        )
+        self.texture_dist_stds = (
+            texture_dist_stds.astype(np.float32) if texture_dist_stds is not None else None
+        )
         self._class_index = {c: i for i, c in enumerate(classes)}
 
     # ------------------------------------------------------------------
     # Kaydetme / yükleme
     # ------------------------------------------------------------------
     def save(self, path: str | Path) -> None:
-        np.savez(
-            path,
-            classes=np.array(self.classes),
-            color_means=self.color_means,
-            texture_means=self.texture_means,
-        )
+        payload: dict[str, np.ndarray] = {
+            "classes": np.array(self.classes),
+            "color_means": self.color_means,
+            "texture_means": self.texture_means,
+        }
+        if self.color_dist_means is not None:
+            payload["color_dist_means"] = self.color_dist_means
+            payload["color_dist_stds"] = self.color_dist_stds
+            payload["texture_dist_means"] = self.texture_dist_means
+            payload["texture_dist_stds"] = self.texture_dist_stds
+        np.savez(path, **payload)
 
     @classmethod
     def load(cls, path: str | Path) -> "ClassProfiles":
         data = np.load(path, allow_pickle=True)
+        keys = set(data.files)
         return cls(
             classes=list(data["classes"]),
             color_means=data["color_means"],
             texture_means=data["texture_means"],
+            color_dist_means=data["color_dist_means"] if "color_dist_means" in keys else None,
+            color_dist_stds=data["color_dist_stds"] if "color_dist_stds" in keys else None,
+            texture_dist_means=data["texture_dist_means"] if "texture_dist_means" in keys else None,
+            texture_dist_stds=data["texture_dist_stds"] if "texture_dist_stds" in keys else None,
         )
 
     # ------------------------------------------------------------------
@@ -124,3 +150,40 @@ class ClassProfiles:
         rank = int(np.sum(dists < dists[idx]))
         percentile = rank / (n - 1) * 100.0
         return float(dists[idx]), percentile
+
+    # ------------------------------------------------------------------
+    # Adaptive verdict
+    # ------------------------------------------------------------------
+    def get_adaptive_verdict(
+        self,
+        label: str,
+        color_distance: float,
+        texture_distance: float,
+        color_percentile: float | None = None,
+        texture_percentile: float | None = None,
+    ) -> str:
+        """
+        Sınıfa özgü eşikle karar verir:
+          - Yeni profil (dist_means/stds var): mean + 2*std eşiği
+          - Eski profil: percentile fallback (caller'ın geçtiği değerler)
+        """
+        idx = self._class_index.get(label)
+        if idx is None:
+            return "kesinlikle bu olamaz"
+
+        # Sadece RENK filtre olarak kullanılır — doku CNN'e bırakılır
+        if self.color_dist_means is not None and self.color_dist_stds is not None:
+            color_threshold = float(self.color_dist_means[idx] + 2.0 * self.color_dist_stds[idx])
+            color_bad = color_distance > color_threshold
+            if color_percentile is not None and color_percentile > 90.0:
+                return "kesinlikle bu olamaz"
+            if color_bad:
+                return "muhtemelen değil"
+            return "olabilir"
+
+        # Geriye uyumlu fallback — sadece renk bazlı
+        if color_percentile is not None and color_percentile > 90.0:
+            return "kesinlikle bu olamaz"
+        if color_percentile is not None and color_percentile > 80.0:
+            return "muhtemelen değil"
+        return "olabilir"
