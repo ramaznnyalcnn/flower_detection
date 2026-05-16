@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -117,6 +118,9 @@ def predict_pipeline(
     embeddings_index: EmbeddingIndex | None = None,
     knn_k: int = 20,
     prefer_cuda: bool = True,
+    log: bool = True,
+    log_source: str = "pipeline",
+    ground_truth: str | None = None,
 ) -> tuple[list[ScreeningResult], np.ndarray, np.ndarray]:
     """
     Yeni pipeline akışı:
@@ -127,6 +131,7 @@ def predict_pipeline(
         5. Füzyon skoru ile yeniden sıralama → top_k
     """
     image_path = Path(image_path)
+    _t_start = time.perf_counter()
 
     # Profil yolunu otomatik belirle: modelin yanındaki > genel
     if profiles_path is None:
@@ -214,4 +219,18 @@ def predict_pipeline(
         )
 
     results.sort(key=lambda r: r.fusion_score, reverse=True)
-    return results[:top_k], original_rgb, masked_rgb
+    top_results = results[:top_k]
+
+    if log:
+        latency_ms = (time.perf_counter() - _t_start) * 1000.0
+        try:
+            from src.prediction_log import log_prediction
+            log_prediction(
+                image_path, top_results,
+                source=log_source, model_path=model_path,
+                latency_ms=latency_ms, ground_truth=ground_truth,
+            )
+        except Exception as exc:
+            print(f"[uyarı] log_prediction atlandı: {exc}")
+
+    return top_results, original_rgb, masked_rgb

@@ -107,6 +107,7 @@ def test_predict_pipeline_smoke(red_image_file, synthetic_profiles, monkeypatch)
         profiles=synthetic_profiles,
         top_k=3,
         embeddings_path=None,  # skip KNN
+        log=False,
     )
     assert len(results) <= 3
     assert all(isinstance(r, ScreeningResult) for r in results)
@@ -131,6 +132,7 @@ def test_predict_pipeline_abstention(red_image_file, synthetic_profiles, monkeyp
         profiles=synthetic_profiles,
         top_k=3,
         embeddings_path=None,
+        log=False,
     )
     # With low model scores, fusion likely below ABSTAIN_FUSION_THRESHOLD
     if results:
@@ -149,6 +151,7 @@ def test_predict_pipeline_high_confidence_no_abstain(red_image_file, synthetic_p
         profiles=synthetic_profiles,
         top_k=1,
         embeddings_path=None,
+        log=False,
     )
     assert len(results) == 1
     assert results[0].label == "red_flower"

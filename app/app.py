@@ -351,6 +351,7 @@ if active_image_path is not None:
                     embeddings_path=active_embeddings_path,
                     embeddings_index=cached_embeddings,
                     top_k=top_k,
+                    log_source="app",
                 )
 
             col_orig, col_masked = st.columns(2)
