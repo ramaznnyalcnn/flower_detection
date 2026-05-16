@@ -31,9 +31,18 @@ def predict_classical(image_path: str | Path, model_path: str | Path, top_k: int
     return [{"label": str(prediction), "score": 1.0}]
 
 
-def predict_any(image_path: str | Path, model_path: str | Path, top_k: int = 5) -> list[dict]:
+def predict_any(
+    image_path: str | Path,
+    model_path: str | Path,
+    top_k: int = 5,
+    use_tta: bool = False,
+    prefer_cuda: bool = True,
+) -> list[dict]:
     model_path = Path(model_path)
     if model_path.suffix == ".pt":
-        return predict_cnn(image_path, model_path, top_k=top_k)
+        return predict_cnn(
+            image_path, model_path,
+            top_k=top_k, use_tta=use_tta, prefer_cuda=prefer_cuda,
+        )
     return predict_classical(image_path, model_path, top_k=top_k)
 

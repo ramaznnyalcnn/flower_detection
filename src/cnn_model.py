@@ -287,7 +287,18 @@ def train_cnn(
     freeze = not fine_tune
     model = build_model(backbone, len(classes), pretrained=pretrained, freeze_backbone=freeze).to(device)
 
-    criterion = nn.CrossEntropyLoss()
+    # Class weights — dengesiz sınıflar için
+    from collections import Counter
+    cls_counts = Counter()
+    for _, label_idx in train_loader.dataset.samples:
+        cls_counts[label_idx] += 1
+    total = sum(cls_counts.values())
+    n_classes = len(classes)
+    weights = torch.tensor(
+        [total / (n_classes * cls_counts.get(i, 1)) for i in range(n_classes)],
+        dtype=torch.float32, device=device
+    )
+    criterion = nn.CrossEntropyLoss(weight=weights, label_smoothing=0.1)
     history = []
     best_val_acc = -1.0
     best_epoch = 0
@@ -398,7 +409,7 @@ def predict_cnn(
     image_path: str | Path,
     checkpoint_path: str | Path,
     top_k: int = 5,
-    prefer_cuda: bool = False,
+    prefer_cuda: bool = True,
     use_tta: bool = False,
 ):
     if use_tta:
@@ -422,7 +433,7 @@ def predict_cnn_tta(
     image_path: str | Path,
     checkpoint_path: str | Path,
     top_k: int = 5,
-    prefer_cuda: bool = False,
+    prefer_cuda: bool = True,
 ):
     torch, _, _, _, _, transforms = _require_torch()
     model, checkpoint, device = load_cnn_checkpoint(checkpoint_path, prefer_cuda=prefer_cuda)
