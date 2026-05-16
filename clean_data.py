@@ -357,6 +357,9 @@ def main():
         json.dump(report, f, indent=2, ensure_ascii=False)
     print(f"\n📄 Rapor kaydedildi: {report_path}")
 
+    # Profil oluşturma scripti bu flag'i arayarak verinin temizlendiğini doğrular.
+    (PROCESSED_DIR / ".cleaned").touch()
+
 
 if __name__ == "__main__":
     main()
