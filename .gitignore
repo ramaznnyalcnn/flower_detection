@@ -9,6 +9,8 @@ data/processed/
 models/
 results/*
 !results/REPORT.md
+!results/analysis/
+results/analysis/*.db
 
 .pytest_cache/
 .mypy_cache/
