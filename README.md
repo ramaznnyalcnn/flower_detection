@@ -165,3 +165,21 @@ streamlit run app/app.py
 - `results/classical_baseline/`: metrik JSON dosyaları, classification report ve confusion matrix görselleri
 - `results/metrics_summary.csv` veya alt klasörlerdeki summary dosyaları: model karşılaştırma tabloları
 - `results/REPORT.md`: rapor iskeleti ve son deney özeti
+- `results/analysis/test_report.md`: pipeline (fusion + abstention) ile test
+  seti üzerinde top-1 doğruluk, abstain oranı, latency, sınıf-bazlı performans
+  ve top-20 karışıklıklar. `python scripts/run_eval.py` ile yeniden üretilir.
+
+## Yöntem Dokümanı
+
+Pipeline mimarisi, her bileşenin tasarım gerekçesi ve hiperparametre
+kalibrasyonu için: [`docs/methodology.md`](docs/methodology.md).
+
+## Test
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q --cov=src --cov-report=term-missing
+```
+
+Kritik dosyalarda coverage hedefleri: `pipeline.py` %86, `screening.py` %81,
+`background_removal.py` %82.
