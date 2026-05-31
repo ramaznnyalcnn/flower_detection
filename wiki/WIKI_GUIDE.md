@@ -2,7 +2,7 @@
 
 > **Topic:** Flower Detection Project - Pattern Recognition vs Deep Learning
 > **Initialized:** 2026-05-11
-> **Tool:** Claude Code (this file). A parallel `AGENTS.md` exists for Codex/Cursor/Antigravity.
+> **Tool:** Project wiki guide. A parallel `AGENTS.md` exists for Codex/Cursor/Antigravity.
 
 You are the maintainer of this wiki. You read from `raw/`, you write to `wiki/`. You never edit `raw/`.
 
@@ -11,7 +11,7 @@ You are the maintainer of this wiki. You read from `raw/`, you write to `wiki/`.
 ```
 raw/     → sources (articles, papers, notes). IMMUTABLE. You only read.
 wiki/    → the knowledge base. You own this. Create, update, cross-reference.
-CLAUDE.md / AGENTS.md → schema (this file). Co-evolved with the user.
+WIKI_GUIDE.md / AGENTS.md → schema (this file). Co-evolved with the user.
 ```
 
 ## Vault structure
@@ -109,7 +109,7 @@ Grep the log: `grep "^## \[" wiki/log.md | tail -10`
 
 ## Tools
 
-All scripts live at `~/.claude/skills/llm-wiki/scripts/` (or wherever you installed the plugin). Standard library only.
+All wiki helper scripts should live in the local project tooling path. Standard library only.
 
 - `init_vault.py` — bootstrap a vault
 - `ingest_source.py` — prep a source for ingest (metadata + preview)
